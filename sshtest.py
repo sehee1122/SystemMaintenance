@@ -13,8 +13,8 @@ class maintenance:
         self.port = 22
         self.ser = ser_info
         self.time = datetime.datetime.now()
-        self.strtime = self.time.strftime('%Y-%m-%d %H:%M:%S')
-        print(self.strtime)
+        self.systime = self.time.strftime('%y%m%d_%H%M%S')
+        print(self.systime)
         self.ssh_connection()
         
     def ssh_connection(self):
@@ -60,13 +60,23 @@ class maintenance:
                 Netstatus = "Network Error"
             file_name = self.save_results(server, Netstatus)
             
-            
-            
         except Exception as err:
             print(err)
 
     def save_results(self, server, ping_result):
-        return 0
+        try:
+            # realpath, abspath
+            BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+            w_file_name = f'{self.systime}_{server}_result.log'
+            print(BASE_DIR)
+            with open(os.path.join(BASE_DIR, w_file_name), 'w') as f:
+                # for k, v in ping_result.items():
+                doc = f"{ping_result}"
+                f.write(doc)
+                
+        except Exception as err:
+            print(err)
+            
     # def send_mail(self, server, ):
     #     return 0
 def main():
