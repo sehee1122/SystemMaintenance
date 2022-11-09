@@ -2,6 +2,7 @@ import paramiko
 import getpass
 import socket
 import datetime
+import os
 
 timeout = 3
 socket.setdefaulttimeout(timeout)
@@ -12,9 +13,9 @@ class maintenance:
         self.time = datetime.datetime.now()
         self.strtime = self.time.strftime('%Y-%m-%d %H:%M:%S')
         print(self.strtime)
-        self.gre_tunnel_checker()
+        self.ssh_connection()
         
-    def gre_tunnel_checker(self):
+    def ssh_connection(self):
         try:
             # ssh server connected class - present pc: client
             ssh = paramiko.SSHClient()
@@ -27,13 +28,27 @@ class maintenance:
             
             # ssh server connect
             ssh.connect(server, port=22, username=user, password=pwd)
-            print('ssh connected\n')
+            print('--------------- SSH Connected ---------------\n')
             
             # ssh route directory/file list check
             stdin, stdout, stderr = ssh.exec_command('df -h')
             print(''.join(stdout.readlines()))
             
+            self.system_check(server, user, pwd)
+            
             ssh.close()
+        except Exception as err:
+            print(err)
+    
+    def system_check(self, server, user, pwd):
+        try:
+            print('--------------- ping test ---------------')
+            # -n: number of packet transmissions(1)
+            response = os.system("ping -n 1 " + server)
+            if response == 0:
+                Netstatus = "Network Active"
+            else:
+                Netstatus = "Network Error"
         except Exception as err:
             print(err)
 
