@@ -31,7 +31,7 @@ class maintenance:
             
             # ssh server connect
             ssh.connect(server, port=22, username=user, password=pwd)
-            print('--------------- SSH Connected ---------------\n')
+            print('=============== SSH Connected ===============\n')
             
             # ssh route directory/file list check
             stdin, stdout, stderr = ssh.exec_command('df -h')
@@ -43,14 +43,14 @@ class maintenance:
     
     def system_check(self, ssh, server, user, pwd):
         
-        # if server == '192.168.5.132':
-        #     file_name = 'server_#1'
         try:
             ser_result_success = {}
             ser_result_fail = {}
-            msg_text = ''
+            main_result = ''
             
+            print('=============== Ping Test ===============')
             for ser in self.ser:
+                
                 ser_name = ser[0]
                 ser_ip_1 = ser[1]
                 ser_ip_2 = ser[2]
@@ -59,15 +59,22 @@ class maintenance:
                 output = stdout.readlines()
                 print('output is : ',''.join(output))
                 
-                print('--------------- ping test ---------------')
-                # -n: number of packet transmissions(1)
-                response = os.system("ping -n 1 " + ser[1])
-                print(response)
-                if response == 0:
-                    Netstatus = ser[1] + ": Active"
-                else:
-                    Netstatus = ser[1] + ": Error"
-                file_name = self.save_file(ser[1], Netstatus)
+                main_result += ser_name
+                
+                for ip_num in range(1,3):
+                    # -n: number of packet transmissions(1)
+                    response = os.system("ping -n 1 " + ser[ip_num])
+                    print(response)
+                    if response == 0:
+                        Netstatus = ' ' + ser[ip_num] + ": Active"
+                    else:
+                        Netstatus = ' ' + ser[ip_num] + ": Error"
+                    main_result += ' /' + Netstatus
+                
+                file_name = self.save_file(ser_name, main_result)
+                main_result += '\n'
+            
+            self.send_mail(file_name, main_result)
             
         except Exception as err:
             print('Ping Test Failed: ', err)
@@ -76,8 +83,7 @@ class maintenance:
         try:
             # realpath, abspath
             BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-            w_file_name = f'{self.systime}_{server}_result.log'
-            # w_file_name = self.systime + "_" + server + "_result.log"
+            w_file_name = self.systime + "_system-active-test_result.log"
             
             with open(os.path.join(BASE_DIR, w_file_name), 'w') as f:
                 # for k, v in ping_result.items():
@@ -87,8 +93,15 @@ class maintenance:
         except Exception as err:
             print('Fail to save log to file: ', err)
             
-    # def send_mail(self, server, ):
-    #     return 0
+    def send_mail(self, file_name, ping_result):
+        try:
+            print("=============== Start Sending Mail ===============")
+            # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+            # print(BASE_DIR)
+            
+        except Exception as err:
+            print('Mail Transfer Failed: ', err)
+
 def main():
     
     # system arguments value (default 1 - python3 sshtest.py)
