@@ -13,7 +13,7 @@ class maintenance:
         self.port = 22
         self.ser = ser_info
         self.time = datetime.datetime.now()
-        self.systime = self.time.strftime('%y%m%d_%H%M%S')
+        self.systime = self.time.strftime('%y%m%d-%H%M%S')
         print(self.systime)
         self.ssh_connection()
         
@@ -25,6 +25,7 @@ class maintenance:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             
             server = '192.168.5.132'
+            # server2 = '192.168.5.130'
             user = input("Username: ")
             pwd = getpass.getpass("Password: ")
             
@@ -35,14 +36,12 @@ class maintenance:
             # ssh route directory/file list check
             stdin, stdout, stderr = ssh.exec_command('df -h')
             print(''.join(stdout.readlines()))
-            
-            self.system_check(server, user, pwd)
-            
+            self.system_check(ssh, server, user, pwd)
             ssh.close()
         except Exception as err:
-            print(err)
+            print('SSH connection Failed: ', err)
     
-    def system_check(self, server, user, pwd):
+    def system_check(self, ssh, server, user, pwd):
         
         # if server == '192.168.5.132':
         #     file_name = 'server_#1'
@@ -51,52 +50,65 @@ class maintenance:
             ser_result_fail = {}
             msg_text = ''
             
-            print('--------------- ping test ---------------')
-            # -n: number of packet transmissions(1)
-            response = os.system("ping -n 1 " + server)
-            if response == 0:
-                Netstatus = "Network Active"
-            else:
-                Netstatus = "Network Error"
-            file_name = self.save_results(server, Netstatus)
+            for ser in self.ser:
+                ser_name = ser[0]
+                ser_ip_1 = ser[1]
+                ser_ip_2 = ser[2]
+                
+                stdin, stdout, stderr = ssh.exec_command('echo this is paramiko')
+                output = stdout.readlines()
+                print('output is : ',''.join(output))
+                
+                print('--------------- ping test ---------------')
+                # -n: number of packet transmissions(1)
+                response = os.system("ping -n 1 " + ser[1])
+                print(response)
+                if response == 0:
+                    Netstatus = ser[1] + ": Active"
+                else:
+                    Netstatus = ser[1] + ": Error"
+                file_name = self.save_file(ser[1], Netstatus)
             
         except Exception as err:
-            print(err)
+            print('Ping Test Failed: ', err)
 
-    def save_results(self, server, ping_result):
+    def save_file(self, server, ping_result):
         try:
             # realpath, abspath
             BASE_DIR = os.path.dirname(os.path.abspath(__file__))
             w_file_name = f'{self.systime}_{server}_result.log'
-            print(BASE_DIR)
+            # w_file_name = self.systime + "_" + server + "_result.log"
+            
             with open(os.path.join(BASE_DIR, w_file_name), 'w') as f:
                 # for k, v in ping_result.items():
                 doc = f"{ping_result}"
                 f.write(doc)
                 
         except Exception as err:
-            print(err)
+            print('Fail to save log to file: ', err)
             
     # def send_mail(self, server, ):
     #     return 0
 def main():
     
-    # system arguments value (default 1)
+    # system arguments value (default 1 - python3 sshtest.py)
     print(sys.argv, len(sys.argv))
     
-    # c:/Users/user/Desktop/sehee/system/git/sshtest.py
-    ser_check_file = sys.argv[0]
-    # []: Array / {}: Dictionary / (): Tuple    
-    ser_info = []
+    if len(sys.argv) == 2:
+        # c:/Users/user/Desktop/sehee/system/git/sshtest.py
+        ser_check_file = sys.argv[1]
+        # []: Array / {}: Dictionary / (): Tuple    
+        ser_info = []
 
-    with open(ser_check_file, 'r') as file:
-        lines = file.read().splitlines()
-        for line in lines:
-            line = line.split(",")
-            ser_info.append(line)
-    
-    # maintenance(ser_info).ssh_connection()
-    maintenance(ser_info)
+        with open(ser_check_file, 'r') as file:
+            lines = file.read().splitlines()
+            for line in lines:
+                line = line.split(",")
+                ser_info.append(line)
+            # maintenance(ser_info).ssh_connection()
+            maintenance(ser_info)
+    else:
+        print('aa')
 
 # main script run
 if __name__ == "__main__":
