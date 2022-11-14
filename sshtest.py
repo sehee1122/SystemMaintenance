@@ -158,7 +158,7 @@ def main():
             # maintenance(ser_info).ssh_connection()
             maintenance(ser_info)
     else:
-        print('aa')
+        print('try python3 sshtest.py ser_info.log')
 
 # main script run
 if __name__ == "__main__":
